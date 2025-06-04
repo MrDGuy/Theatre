@@ -1,12 +1,5 @@
 package org.code.theater;
 
-import org.code.media.Color;
-import org.code.media.Font;
-import org.code.media.FontStyle;
-import org.code.media.Image;
-import org.code.theater.support.InstrumentSampleLoader;
-import run.mycode.theater.support.*;
-
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
@@ -14,9 +7,27 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.code.media.Color;
+import org.code.media.Font;
+import org.code.media.FontStyle;
+import org.code.media.Image;
 import static org.code.theater.support.Constants.THEATER_HEIGHT;
 import static org.code.theater.support.Constants.THEATER_WIDTH;
+
+import run.mycode.theater.support.ClearSceneAction;
+import run.mycode.theater.support.DrawEllipseAction;
+import run.mycode.theater.support.DrawImageAction;
 import static run.mycode.theater.support.DrawImageAction.UNSPECIFIED;
+import run.mycode.theater.support.DrawLineAction;
+import run.mycode.theater.support.DrawPolygonAction;
+import run.mycode.theater.support.DrawRectangleAction;
+import run.mycode.theater.support.DrawShapeAction;
+import run.mycode.theater.support.DrawTextAction;
+import run.mycode.theater.support.FontHelper;
+import run.mycode.theater.support.PauseAction;
+import run.mycode.theater.support.PlayNoteAction;
+import run.mycode.theater.support.PlaySoundAction;
+import run.mycode.theater.support.SceneAction;
 
 public class Scene {
     // Visible for testing
@@ -25,9 +36,9 @@ public class Scene {
     static final int DEFAULT_TEXT_HEIGHT = 20;
     static final Color DEFAULT_COLOR = Color.BLACK;
     static final double DEFAULT_STROKE_WIDTH = 1.0;
-    static final Instrument DEFAULT_INSTRUMENT = Instrument.PIANO;
+    static final Instrument DEFAULT_INSTRUMENT = Instrument.ACOUSTIC_GRAND_PIANO;
 
-    static final InstrumentSampleLoader instrumentFiles = new InstrumentSampleLoader();
+    //static final InstrumentSampleLoader instrumentFiles = new InstrumentSampleLoader();
 
     private final List<SceneAction> actions;
 
@@ -137,8 +148,7 @@ public class Scene {
      * @param seconds length of the note.
      */
     public final void playNote(Instrument instrument, int note, double seconds) {
-        URL noteFile = instrumentFiles.getSampleFilePath(instrument, note);
-        this.actions.add(new PlayNoteAction(noteFile, seconds));
+        this.actions.add(new PlayNoteAction(instrument.getMidiValue(), note, seconds));
     }
 
     /**

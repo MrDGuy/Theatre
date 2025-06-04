@@ -1,45 +1,51 @@
 package run.mycode.theater.support;
 
+import java.awt.Graphics2D;
+
+import javax.sound.midi.MidiChannel;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Synthesizer;
+
 import run.mycode.theater.Stage;
 
-import javax.sound.sampled.*;
-import java.awt.*;
-import java.io.IOException;
-import java.net.URL;
-
 public class PlayNoteAction implements SceneAction {
-    private Clip clip;
+    private final int instrument; // MIDI instrument number (0–127)
+    private final int note;       // MIDI note number (0–127)
+    private final int duration;   // in milliseconds
+    private static Synthesizer synthesizer;
+    private static MidiChannel[] channels;
 
-    public PlayNoteAction(URL note, double seconds) {
+    static {
         try {
-            AudioFileFormat fileFormat = AudioSystem.getAudioFileFormat(note);
-            AudioFormat audioFormat = fileFormat.getFormat();
-            AudioInputStream inputStream = AudioSystem.getAudioInputStream(note);
-            long framesOfAudioToCopy = (long)(seconds * audioFormat.getFrameRate());
-
-            if (framesOfAudioToCopy > fileFormat.getFrameLength()) {
-                throw new UnsupportedOperationException("Note duration too long");
-            }
-            AudioInputStream shortenedStream = new AudioInputStream(inputStream, audioFormat, framesOfAudioToCopy);
-            clip = AudioSystem.getClip();
-            clip.open(shortenedStream);
-        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-            clip = null;
-            throw new RuntimeException(e); // Convert exceptions for simpler student code
+            synthesizer = MidiSystem.getSynthesizer();
+            synthesizer.open();
+            channels = synthesizer.getChannels();
+        } catch (MidiUnavailableException e) {
+            throw new RuntimeException("MIDI system not available", e);
         }
     }
 
-    /**
-     * Perform the SceneAction
-     *
-     * @param context the graphics context upon which to perform the action
-     * @param stage the stage where the scene is taking place
-     */
+    public PlayNoteAction(int instrument, int note, double seconds) {
+        this.instrument = instrument;
+        this.note = note;
+        this.duration = (int) (seconds * 1000);
+    }
+
     @Override
     public void go(Graphics2D context, Stage stage) {
-        if (clip == null) {
-            return;
-        }
-        clip.start();
+        if (channels == null) return;
+
+        MidiChannel channel = channels[0]; // Use channel 0 by default
+        channel.programChange(instrument); // Set the instrument
+        channel.noteOn(note, 100);         // Velocity (volume)
+
+        // Stop note after duration using a separate thread to not block the UI
+        new Thread(() -> {
+            try {
+                Thread.sleep(duration);
+            } catch (InterruptedException ignored) {}
+            channel.noteOff(note);
+        }).start();
     }
 }
